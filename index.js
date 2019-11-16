@@ -10,60 +10,42 @@ const request = require('request');
 const PAGE_ACCESS_TOKEN = "EAAHhK7oMsDcBAOi23rCS3rOx3EJX1Rz3X2GJyo4YDvj1M3ZCYBRvl0p65Rg416uZCvWPp7QRXVOuSZBYoQ9ffZCOGUFxwIVxBSZAr0PRL3hgNsQV9A19mcMYXG2XmTY9iTKUkCZBwXQoBSlG3F38WfdLojwBQZBteW0eI0YtdurYv7SrsKVTv3W";
 
 // Sets server port and logs message on success
-app.listen(process.env.PORT || 80, () => console.log('webhook is listening'));
+app.listen(process.env.PORT || 80, () => console.log('webhook is listening...'));
 
 function callMessagingAPI(sender_psid, response) {
-    let structured = false;
-    if(response.text.localeCompare("ask me") == 0) {
-        structured = true;
-    }
-    let withSpaces = "";
-    for(var i = 0; i < response.text.length; i++) {
-        withSpaces += response.text[i] + " ";
-    }
-    response.text = withSpaces;
-    // Construct the message body
-    let request_body = {
-        "recipient": {
-            "id": sender_psid
-        },
-        "message": {
-            "text": response.text 
-        }
-    }
-    if(structured) {
-        response = {
-            "attachment": {
-              "type": "template",
-              "payload": {
-                "template_type": "generic",
-                "elements": [{
-                  "title": "Is Star Wars your favoriet movie?",
-                  "subtitle": "Try to give the correct answer",
-                  "image_url": "https://theplaylist.net/wp-content/uploads/2019/05/Natalie-Portman-Star-Wars-Phantom-Menace-1200x520.jpg",
-                  "buttons": [
-                    {
-                        "type": "postback",
-                        "title": "Yes, it is",
-                        "payload": "yes",
-                    },
-                    {
-                        "type": "postback",
-                        "title": "Of course!",
-                        "payload": "yes",
-                    },
-                    {
-                        "type": "postback",
-                        "title": "It sucks",
-                        "payload": "no",
-                    }
-                  ],
-                }]
-              }
+
+  let message = {
+    "attachment": {
+      "type": "template",
+      "payload": {
+        "template_type": "generic",
+        "elements": [{
+          "title": "Welcome to Fide Support",
+          "subtitle": "Please, specify your role in the Fide ride",
+          // "image_url": "https://theplaylist.net/wp-content/uploads/2019/05/Natalie-Portman-Star-Wars-Phantom-Menace-1200x520.jpg",
+          "buttons": [
+            {
+                "type": "postback",
+                "title": "Passenger",
+                "payload": "passenger"
+            },
+            {
+                "type": "postback",
+                "title": "Driver",
+                "payload": "driver"
             }
-          }
-        request_body.message = response;
+          ],
+        }]
+      }
     }
+  }
+
+  let request_body = {
+    "recipient": {
+        "id": sender_psid
+    },
+    message
+  }
 
   // Send the HTTP request to the Messenger Platform
   request({
@@ -73,6 +55,7 @@ function callMessagingAPI(sender_psid, response) {
     "json": request_body
   }, (err, res, body) => {
     if (!err) {
+        console.log(request_body);
         console.log('message sent!'); 
     } else {
         console.error("Unable to send message:" + err);
@@ -89,12 +72,81 @@ function handleMessage(sender_psid, received_message) {
 
 // Handles messaging_postbacks events
 function handlePostback(sender_psid, received_postback) {
-    let message = "Krasavchik";
-    if(received_postback.payload == "no") {
-        message = "Тогда иди дери свою мамашу";
+  console.log(received_postback);
+
+  let title = "Please, specify your request";
+
+
+  switch(received_postback.payload) {
+    case "driver":
+    case "passenger":
+      break;
+    case "appeal":
+      break;
+    case "help":
+      break;
+    case "ride-related":
+      break;
+    case "not-ride-related":
+      break;
+    case "comment-request":
+      break;
+    case "qr-code-request":
+      break;
+  }
+
+  let message = {
+    "attachment": {
+      "type": "template",
+      "payload": {
+        "template_type": "generic",
+        "elements": [{
+          "title": "Please, specify your request",
+          "subtitle": "select one from the options below",
+          // "image_url": "https://theplaylist.net/wp-content/uploads/2019/05/Natalie-Portman-Star-Wars-Phantom-Menace-1200x520.jpg",
+          "buttons": [
+            {
+                "type": "postback",
+                "title": "Appeal",
+                "payload": "appeal"
+            },
+            {
+                "type": "postback",
+                "title": "Help",
+                "payload": "help"
+            }
+          ],
+        }]
+      }
     }
-    callMessagingAPI(sender_psid, {"text": message});
+  }
+
+  let request_body = {
+    "recipient": {
+        "id": sender_psid
+    },
+    message
+  }
+
+  // Send the HTTP request to the Messenger Platform
+  request({
+    "uri": "https://graph.facebook.com/v2.6/me/messages",
+    "qs": { "access_token": process.env.PAGE_ACCESS_TOKEN },
+    "method": "POST",
+    "json": request_body
+  }, (err, res, body) => {
+    if (!err) {
+        console.log(request_body);
+        console.log('message sent!'); 
+    } else {
+        console.error("Unable to send message:" + err);
+    }
+  }); 
 }
+
+app.get('/', (req, res) => {
+  res.status(200).send("Working fine");
+});
 
 // Adds support for GET requests to our webhook
 app.get('/webhook', (req, res) => {
